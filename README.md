@@ -5,7 +5,7 @@ FastAPI backend, one vanilla HTML page, local Gemma 4 through Ollama. No cloud A
 
 ## Run it
 
-**Windows:** install Python 3.10+, then double-click `START-PLAINSIGHT.cmd`. It installs Ollama if missing, picks a Gemma 4 model for your RAM, pulls it, sets up `.venv`, starts the app, and opens http://localhost:8000. Press ENTER in the window to stop.
+**Windows:** install Python 3.10+, then run `START-PLAINSIGHT.cmd` as administrator. It installs Ollama if missing, picks a Gemma 4 model for your RAM, pulls it, sets up `.venv`, starts the app, and opens http://localhost:8000. Press ENTER in the window to stop.
 
 **macOS/Linux:** install Python 3.10+ and Ollama, start Ollama, then run `bash run.sh` and open http://localhost:8000.
 
