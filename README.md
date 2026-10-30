@@ -19,7 +19,7 @@ Keep `OLLAMA_URL` local and `HOST` at 127.0.0.1: the app has no authentication. 
 
 - Upload or photograph one or several pages (or paste text), pick a language and reading level, press **Explain this document**.
 - The upload area stays on the page. Every analysis stays below it as its own card that you can minimize, expand, or remove, so you can keep adding documents without refreshing.
-- Each card: summary, what it means, key numbers and deadlines (each with a highlighted source quote), checklist with progress, glossary, questions to ask, the original text, a 3-question quiz, read aloud, printable summary.
+- Each card: summary, what it means, key numbers and deadlines (each with a highlighted source quote), checklist with progress, glossary, questions to ask, the original text, a 3-question quiz, read aloud (play/pause, stop, back and forward 10 seconds; seeking is approximate because browsers cannot seek speech), printable summary.
 - Switching language is instant: page labels for every language are translated once in the background, stored on disk (`.ui_cache.json`), and loaded in one request. Existing analysis cards are translated in place (quotes, amounts, and dates stay as written) and each translation is kept, so switching back is instant too.
 - **Pip**, the side assistant, is a real streaming model chat. Before a document exists it explains how the app works. Press **Ask Pip** on a card to talk about that document (each keeps its own chat). It answers from the document, ends with a source quote, and can search the text, add checklist items, and save questions for a professional. Those changes appear on the page immediately.
 - Dark theme by default, with a light theme toggle, a high-contrast mode (follows the OS "increase contrast" setting until you choose), and a larger-text button. The header shows the model in use and whether the expected speed is Fast, Medium, or Slow. RTL layout for Arabic.
@@ -32,7 +32,8 @@ Keep `OLLAMA_URL` local and `HOST` at 127.0.0.1: the app has no authentication. 
 - Pasted text skips re-transcription, which is the slowest part of analysis.
 - Photos are resized to 1280 px and compressed in the browser; output length is capped per request.
 - One reusable connection to Ollama; options a model rejects (`think`, tools) are remembered so they cost one retry, once.
-- Motion is limited to short one-shot fades and slides on transform/opacity, and is switched off by the OS "reduce motion" setting.
+- Motion (scroll reveals, word-by-word headline with a highlighter swipe, a stamp, count-ups, pinned-note cards) uses transform/opacity only and is switched off by the OS "reduce motion" setting.
+- "Pick your Gemma" lists Gemma 2, 3, 3n (E2B/E4B) and 4; click an installed size to switch the live model. Set `DEPLOY_HOST` to show a hosting badge.
 
 ## Privacy and limits
 
