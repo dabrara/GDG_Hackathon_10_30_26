@@ -134,6 +134,8 @@ body.pip-open #pip{transform:none;visibility:visible}body.pip-open #fab{display:
 .m.ai.typing::after{content:"▍";animation:blink 1s steps(1) infinite}@keyframes blink{50%{opacity:0}}
 .src{display:block;margin-top:8px;font-size:.88em;white-space:normal}
 .act{align-self:flex-start;font-size:.82em;color:var(--ok);padding:2px 10px;border:1px solid var(--line);border-radius:99px}
+.modebar{padding:8px 16px 10px;border-bottom:1px solid var(--line)}.modebar small{display:block;margin-top:6px;color:var(--mute,inherit);opacity:.8;font-size:.82em}
+.modesw{display:flex;gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden}.modesw button{flex:1;border:0;border-radius:0;background:transparent;font-size:.88em;padding:6px 8px}.modesw button[aria-pressed=true]{background:var(--acc);color:var(--acc-ink)}
 .chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 16px 10px}.chips button{font-size:.85em;font-weight:500;padding:5px 11px}
 .pf{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--line)}#pipq{flex:1;min-width:0}
 
@@ -261,6 +263,7 @@ body.has-docs .marq{display:none}
 <button id="fab" aria-controls="pip">✦ <span data-i="askPip">Ask Pip</span></button>
 <aside id="pip" aria-label="Pip assistant">
   <div class="ph"><strong>✦ Pip</strong><span class="tag" id="pipDoc" hidden></span><span style="flex:1"></span><button id="pipClear" title="Clear chat">Clear</button><button class="icon" id="pipClose" aria-label="Close Pip">×</button></div>
+  <div class="modebar"><div class="modesw" role="group" aria-label="How Pip answers"><button type="button" id="modeDoc" aria-pressed="true">Document</button><button type="button" id="modeGen" aria-pressed="false">General AI</button></div><small id="modeHint"></small></div>
   <div id="log" aria-live="polite"></div>
   <div class="chips" id="chips"></div>
   <form class="pf" id="pipForm"><input id="pipq" type="text" maxlength="400" autocomplete="off" aria-label="Ask Pip" data-i-ph="askPlaceholder" placeholder="Ask Pip anything...">
@@ -535,20 +538,26 @@ const CANNED = {
   slow: () => `Reading a document is the heavy part: the model has to look at the whole image and write the answer.${HEALTH.model_name ? ` You are using ${HEALTH.model_name}; expected speed is ${HEALTH.speed}.` : ''}\nTo go faster: paste the text instead of using a photo, use one sharp page at a time, close other heavy apps, or run on a computer with a GPU. The first request after startup is slowest while the model loads.`};
 const CANNED_MATCH = [['scan', /\b(scan|photo|picture|camera|how.*(upload|use|start))/i], ['privacy', /\b(privat|safe|secur|confidential|data|cloud)/i], ['slow', /\b(slow|fast|speed|latency|long|wait)/i]];
 const CANNED_CHIP = {'How do I scan a document?': 'scan', 'Is my document private?': 'privacy', 'Why is it slow?': 'slow'};
+const GEN_CHIPS = ['Help me with a math problem', 'Explain this in simple terms', 'Is this normal for most people?'];
+const MODE_HINT = {document: 'Pip sticks to your document, cites it, and labels anything outside it.', general: 'Pip answers anything, including math and opinions. Your document is optional context.'};
+const curMode = () => cur().mode || 'document';
+function renderMode() { const m = curMode(); $('#modeDoc').setAttribute('aria-pressed', m === 'document'); $('#modeGen').setAttribute('aria-pressed', m === 'general'); $('#modeHint').textContent = MODE_HINT[m]; }
+function setMode(m) { cur().mode = m; renderMode(); const c = cur(); if (!c.log && !c.history.length) greet(); chips(); }
+$('#modeDoc').onclick = () => setMode('document'); $('#modeGen').onclick = () => setMode('general');
 const HELP_CHIPS = ['How do I scan a document?', 'Is my document private?', 'Why is it slow?'];
 const DOC_CHIPS = ['When is it due and how much?', 'What should I do first?', 'Remind me to call about this'];
 function openPip(open) { document.body.classList.toggle('pip-open', open); if (open && innerWidth > 900) $('#pipq').focus(); }
 $('#fab').onclick = () => openPip(true); $('#pipClose').onclick = () => openPip(false);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') openPip(false); });
-function chips() { $('#chips').innerHTML = (ACTIVE ? DOC_CHIPS : HELP_CHIPS).map(c => `<button>${esc(c)}</button>`).join(''); $$('#chips button').forEach(b => b.onclick = () => ask(b.textContent)); }
+function chips() { $('#chips').innerHTML = (curMode() === 'general' ? GEN_CHIPS : ACTIVE ? DOC_CHIPS : HELP_CHIPS).map(c => `<button>${esc(c)}</button>`).join(''); $$('#chips button').forEach(b => b.onclick = () => ask(b.textContent)); }
 const pop = el => { el.classList.add('new'); el.addEventListener('animationend', () => el.classList.remove('new'), {once: true}); };
 function addMsg(cls, text) { const d = document.createElement('div'); d.className = 'm ' + cls; pop(d); d.textContent = text; $('#log').appendChild(d); d.scrollIntoView({block: 'end'}); return d; }
-function greet() { $('#log').innerHTML = ''; addMsg('ai', ACTIVE ? 'I have read this document. Ask me anything about it, or tell me what to add to your checklist.' : 'Hi, I’m Pip. Ask me how PlainSight works, or upload a document and I’ll help you understand it.'); }
+function greet() { $('#log').innerHTML = ''; addMsg('ai', curMode() === 'general' ? 'General AI mode: ask me anything, including math. I can still use your document if it helps.' : ACTIVE ? 'I have read this document. Ask me anything about it, or tell me what to add to your checklist.' : 'Hi, I’m Pip. Ask me how PlainSight works, or upload a document and I’ll help you understand it.'); }
 function setActive(sid, save = true) {
   if (save) cur().log = $('#log').innerHTML;
   ACTIVE = sid; const c = cur();
   if (c.log) $('#log').innerHTML = c.log; else greet();
-  $('#pipDoc').hidden = !sid; $('#pipDoc').textContent = c.name || ''; chips();
+  $('#pipDoc').hidden = !sid; $('#pipDoc').textContent = c.name || ''; renderMode(); chips();
   $('#log').lastElementChild?.scrollIntoView({block: 'end'});
 }
 function finishAnswer(d, text) {
@@ -558,12 +567,12 @@ function finishAnswer(d, text) {
 }
 async function ask(text) {
   text = text.trim(); if (!text || BUSY) return;
-  const key = ACTIVE ? null : CANNED_CHIP[text] || CANNED_MATCH.find(([, re]) => re.test(text))?.[0];
+  const key = ACTIVE || curMode() === 'general' ? null : CANNED_CHIP[text] || CANNED_MATCH.find(([, re]) => re.test(text))?.[0];
   if (key) { const c = cur(), a = CANNED[key](); $('#pipq').value = ''; addMsg('me', text); addMsg('ai', a); c.history.push({role: 'user', content: text}, {role: 'assistant', content: a}); return; }
   BUSY = true; $('#send').disabled = true; $('#pipq').value = ''; $('#chips').innerHTML = '';
   const c = cur(); addMsg('me', text); const bub = addMsg('ai typing', ''); let ans = '';
   try {
-    await stream('/api/chat', {session_id: c.sid || null, message: text, language: lang(), history: c.history.slice(-8)}, ev => {
+    await stream('/api/chat', {session_id: c.sid || null, message: text, language: lang(), mode: curMode(), history: c.history.slice(-8)}, ev => {
       if (ev.t === 'token') { ans += ev.v; bub.textContent = ans; bub.scrollIntoView({block: 'end'}); }
       if (ev.t === 'tool') { const a = document.createElement('div'); a.className = 'act'; pop(a); a.textContent = ({find_in_document: 'Searched the document', add_checklist_item: 'Added to checklist', add_question_for_professional: 'Saved a question'})[ev.tool] + (ev.tool === 'find_in_document' ? '' : ': ' + ev.detail); bub.before(a); }
       if (ev.t === 'done') { ans = ev.answer; if (c.sid) { c.checklist = ev.checklist; c.questions = ev.questions; renderDoc(c); } }
@@ -574,6 +583,7 @@ async function ask(text) {
 }
 $('#pipForm').onsubmit = e => { e.preventDefault(); ask($('#pipq').value); };
 $('#pipClear').onclick = () => { const c = cur(); c.history = []; c.log = null; greet(); chips(); };
+renderMode();
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 if (!SR) $('#mic').hidden = true;
 else $('#mic').onclick = () => { if (!confirm('Your browser may send microphone audio to its speech provider. Continue?')) return;
