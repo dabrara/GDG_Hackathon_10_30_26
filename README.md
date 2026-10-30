@@ -15,6 +15,25 @@ Automatic model by RAM: `gemma4:e2b` (<16 GiB), `e4b` (16-23), `12b` (24-31), `2
 Other settings: `OLLAMA_URL`, `NUM_CTX` (8192), `KEEP_ALIVE` (30m), `HOST`, `PORT`.
 Keep `OLLAMA_URL` local and `HOST` at 127.0.0.1: the app has no authentication. To host it on DigitalOcean see `deploy/DIGITALOCEAN.md`.
 
+## Digital Ocean
+Create the Droplet with DigitalOcean’s “AI/ML ready” GPU image so the NVIDIA driver is already installed. Plain Ubuntu works, but the model would run on the CPU and be slow.
+Copy the script(digitalocean.txt) to the Droplet (scp deploy-plainsight.sh root@<droplet-ip>:/root/), or paste it into nano deploy-plainsight.sh.
+Run sudo bash deploy-plainsight.sh. To also download extra models for the live switcher, run sudo EXTRA_MODELS="gemma3n:e4b gemma3:4b gemma2:9b" bash deploy-plainsight.sh.
+When it finishes it prints the https://<ip>.sslip.io link, a username (demo) and a password. The same details are saved in /root/plainsight-credentials.txt.
+
+Installs git, Python and Ollama, then clones dabrara/GDG_Hackathon_10_30_26 (branch main).
+Installs the app’s Python requirements and starts it as a background service that restarts if it crashes.
+Picks a Gemma 4 model from the GPU’s memory: 12B at 24 GB or more, E4B at 12 GB or more, otherwise E2B. Set MODEL=gemma4:31b to force a bigger one.
+Puts HTTPS and a password in front of the site, using a free sslip.io address (or DOMAIN= if you have your own). The app has no login of its own, so this is what keeps it private.
+Opens only the SSH and web ports on the firewall, and keeps Ollama private.
+Sets the “DigitalOcean GPU Droplet” badge in the page header.
+
+Re-running and options
+
+Run the same command again any time to pull your latest GitHub changes and restart. It keeps the same password unless you set APP_PASS.
+You can also set APP_USER, BRANCH and REPO_URL the same way as MODEL.
+
+
 ## What it does
 
 - Upload or photograph one or several pages (or paste text), pick a language and reading level, press **Explain this document**.
